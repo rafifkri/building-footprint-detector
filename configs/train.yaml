@@ -1,0 +1,75 @@
+data:
+  manifest_path: data/manifest.csv
+  splits_dir: data/splits
+  tiles_dir: data/processed/tiles
+  tile_size: 512
+  overlap: 64
+  num_workers: 4
+
+model:
+  name: unet
+  encoder: resnet34
+  encoder_weights: imagenet
+  in_channels: 3
+  classes: 1
+  activation: null
+
+loss:
+  name: dice_bce
+  dice_weight: 0.5
+  bce_weight: 0.5
+
+optimizer:
+  name: adamw
+  lr: 0.0001
+  weight_decay: 0.01
+
+scheduler:
+  name: cosine
+  T_max: 100
+  eta_min: 0.000001
+
+training:
+  epochs: 100
+  batch_size: 16
+  val_batch_size: 16
+  early_stopping_patience: 15
+  grad_clip: 1.0
+  accumulation_steps: 1
+  mixed_precision: true
+
+augmentation:
+  train:
+    horizontal_flip: 0.5
+    vertical_flip: 0.5
+    rotate90: 0.5
+    shift_scale_rotate:
+      shift_limit: 0.1
+      scale_limit: 0.1
+      rotate_limit: 15
+      p: 0.5
+    random_brightness_contrast:
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+      p: 0.3
+    gaussian_noise:
+      var_limit: [10.0, 50.0]
+      p: 0.2
+  val:
+    normalize: true
+
+checkpoint:
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  monitor: val_iou
+  mode: max
+
+logging:
+  tensorboard: true
+  wandb: false
+  wandb_project: building-footprint
+  log_interval: 10
+
+seed: 42
+device: cuda

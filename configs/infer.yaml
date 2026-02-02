@@ -1,0 +1,37 @@
+model:
+  name: unet
+  encoder: resnet34
+  encoder_weights: null
+  in_channels: 3
+  classes: 1
+  activation: null
+
+checkpoint:
+  path: checkpoints/best.pth
+
+inference:
+  tile_size: 512
+  overlap: 128
+  batch_size: 8
+  threshold: 0.5
+  device: cuda
+  mixed_precision: true
+
+tta:
+  enabled: true
+  transforms:
+    - horizontal_flip
+    - vertical_flip
+    - rotate90
+
+postprocess:
+  min_area: 100
+  simplify_tolerance: 1.0
+  remove_holes_area: 50
+  smooth: true
+
+output:
+  save_mask: true
+  save_geojson: true
+  mask_format: tif
+  geojson_crs: EPSG:4326
