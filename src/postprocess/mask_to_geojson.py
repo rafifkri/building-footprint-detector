@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import cv2
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import rasterio
 from rasterio import features
 from shapely.geometry import Polygon, MultiPolygon, shape, mapping

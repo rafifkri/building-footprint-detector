@@ -2,6 +2,7 @@
 Test mask to GeoJSON conversion.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
@@ -10,7 +11,7 @@ import pytest
 import rasterio
 from rasterio.transform import from_bounds
 
-import sys
+# Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.postprocess.postproc import (

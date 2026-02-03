@@ -2,6 +2,7 @@
 Smoke test for inference pipeline.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import numpy as np
 import pytest
 import torch
 
-import sys
+# Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models.unet_smp import create_model

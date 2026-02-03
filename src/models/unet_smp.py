@@ -84,7 +84,7 @@ def load_model_from_checkpoint(
         activation=model_config.get("activation", None),
     )
     
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     
     if "model_state_dict" in checkpoint:
         model.load_state_dict(checkpoint["model_state_dict"])

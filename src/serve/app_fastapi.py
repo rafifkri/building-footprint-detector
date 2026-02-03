@@ -5,6 +5,7 @@ FastAPI service for building footprint detection.
 import io
 import json
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Optional
 
@@ -26,42 +27,13 @@ from src.postprocess.mask_to_geojson import mask_to_polygons
 from src.utils.config import load_config
 
 
-app = FastAPI(
-    title="Building Footprint Detection API",
-    description="API for detecting building footprints in satellite imagery",
-    version="1.0.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
+# Global variables for model
 model = None
 config = None
 inferencer = None
 
 
-class InferenceSettings(BaseModel):
-    tile_size: int = 512
-    overlap: int = 128
-    threshold: float = 0.5
-    use_tta: bool = True
-    min_area: int = 100
-    smooth: bool = True
-
-
-class DetectionResponse(BaseModel):
-    num_buildings: int
-    buildings: List[dict]
-
-
-@app.on_event("startup")
-async def startup_event():
+def load_model_on_startup():
     """Load model on startup."""
     global model, config, inferencer
     
@@ -99,6 +71,48 @@ async def startup_event():
         
     except Exception as e:
         print(f"Error loading model: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown."""
+    load_model_on_startup()
+    yield
+    # Cleanup on shutdown
+    global model, config, inferencer
+    model = None
+    config = None
+    inferencer = None
+
+
+app = FastAPI(
+    title="Building Footprint Detection API",
+    description="API for detecting building footprints in satellite imagery",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class InferenceSettings(BaseModel):
+    tile_size: int = 512
+    overlap: int = 128
+    threshold: float = 0.5
+    use_tta: bool = True
+    min_area: int = 100
+    smooth: bool = True
+
+
+class DetectionResponse(BaseModel):
+    num_buildings: int
+    buildings: List[dict]
 
 
 @app.get("/")

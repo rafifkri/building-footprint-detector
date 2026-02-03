@@ -13,7 +13,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from albumentations.pytorch import ToTensorV2
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim import AdamW, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau, StepLR
 from torch.utils.data import DataLoader
@@ -71,7 +71,7 @@ def get_transforms(config: dict, split: str) -> A.Compose:
         if "gaussian_noise" in aug_config:
             gn = aug_config["gaussian_noise"]
             transforms_list.append(
-                A.GaussNoise(
+                A.GaussianNoise(
                     var_limit=tuple(gn.get("var_limit", [10.0, 50.0])),
                     p=gn.get("p", 0.2),
                 )
@@ -161,7 +161,7 @@ def train_one_epoch(
         masks = masks.to(device)
         
         if scaler is not None:
-            with autocast():
+            with autocast(device_type="cuda"):
                 outputs = model(images)
                 loss = criterion(outputs, masks)
                 loss = loss / accumulation_steps
@@ -306,7 +306,7 @@ def train(config_path: str) -> None:
     
     train_config = config.get("training", {})
     mixed_precision = train_config.get("mixed_precision", True)
-    scaler = GradScaler() if mixed_precision and device == "cuda" else None
+    scaler = GradScaler("cuda") if mixed_precision and device == "cuda" else None
     
     data_config = config.get("data", {})
     tiles_dir = Path(data_config.get("tiles_dir", "data/processed/tiles"))

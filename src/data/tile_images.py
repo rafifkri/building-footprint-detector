@@ -148,7 +148,7 @@ def tile_image_and_mask(
     return tile_count
 
 
-def find_mask_for_image(image_path: str, masks_dir: str = None) -> str:
+def find_mask_for_image(image_path: str, masks_dir: str = None, city: str = None) -> str:
     """
     Find corresponding mask file for an image.
     Supports multiple naming conventions and extensions.
@@ -156,6 +156,7 @@ def find_mask_for_image(image_path: str, masks_dir: str = None) -> str:
     Args:
         image_path: Path to the image file
         masks_dir: Optional directory to search for masks
+        city: Optional city name for mask filename prefix
         
     Returns:
         Path to mask file or None if not found
@@ -181,6 +182,12 @@ def find_mask_for_image(image_path: str, masks_dir: str = None) -> str:
             continue
         
         for ext in possible_extensions:
+            # Try with city prefix first
+            if city:
+                mask_path = mask_dir / f"{city}_{image_stem}_mask{ext}"
+                if mask_path.exists():
+                    return str(mask_path)
+            
             mask_path = mask_dir / f"{image_stem}{ext}"
             if mask_path.exists():
                 return str(mask_path)
@@ -233,7 +240,11 @@ def tile_from_splits(
             city = row.get("city", "unknown")
             image_name = Path(image_path).stem
             
-            mask_path = find_mask_for_image(image_path, str(masks_path) if masks_path else None)
+            mask_path = find_mask_for_image(
+                image_path, 
+                str(masks_path) if masks_path else None,
+                city=city
+            )
             
             if mask_path is None:
                 print(f"Warning: Mask not found for {image_path}")

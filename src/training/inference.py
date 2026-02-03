@@ -107,25 +107,29 @@ class TiledInference:
         predictions = []
         
         with torch.no_grad():
+            # Original
             pred = torch.sigmoid(self.model(batch))
             predictions.append(pred)
             
+            # Horizontal flip
             flipped_h = torch.flip(batch, dims=[3])
             pred_h = torch.sigmoid(self.model(flipped_h))
             pred_h = torch.flip(pred_h, dims=[3])
             predictions.append(pred_h)
             
+            # Vertical flip
             flipped_v = torch.flip(batch, dims=[2])
             pred_v = torch.sigmoid(self.model(flipped_v))
             pred_v = torch.flip(pred_v, dims=[2])
             predictions.append(pred_v)
             
+            # 90 degree rotation
             rotated = torch.rot90(batch, k=1, dims=[2, 3])
             pred_r = torch.sigmoid(self.model(rotated))
             pred_r = torch.rot90(pred_r, k=-1, dims=[2, 3])
             predictions.append(pred_r)
         
-        avg_pred = torch.stack(predictions).mean(dim=0)
+        avg_pred = torch.stack(predictions, dim=0).mean(dim=0)
         return avg_pred
     
     def predict(

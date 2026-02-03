@@ -167,7 +167,7 @@ def main():
             elif image_np.shape[-1] == 4:
                 image_np = image_np[:, :, :3]
             
-            st.image(image_np, caption="Uploaded Image", use_column_width=True)
+            st.image(image_np, caption="Uploaded Image", use_container_width=True)
             
             st.info(f"Image size: {image_np.shape[1]} x {image_np.shape[0]}")
     
@@ -203,7 +203,7 @@ def main():
                         image_np, mask, color=(255, 0, 0), alpha=0.4
                     )
                     
-                    st.image(overlay, caption="Detection Result", use_column_width=True)
+                    st.image(overlay, caption="Detection Result", use_container_width=True)
                     
                     polygons = mask_to_polygons(mask)
                     st.success(f"Detected {len(polygons)} buildings")

@@ -132,12 +132,12 @@ def evaluate(
                     )
     
     final_metrics = {
-        "loss": np.mean(all_metrics["loss"]),
-        "iou": np.mean(all_metrics["iou"]),
-        "dice": np.mean(all_metrics["dice"]),
-        "precision": np.mean(all_metrics["precision"]),
-        "recall": np.mean(all_metrics["recall"]),
-        "f1": np.mean(all_metrics["f1"]),
+        "loss": np.mean(all_metrics["loss"]) if all_metrics["loss"] else 0.0,
+        "iou": np.mean(all_metrics["iou"]) if all_metrics["iou"] else 0.0,
+        "dice": np.mean(all_metrics["dice"]) if all_metrics["dice"] else 0.0,
+        "precision": np.mean(all_metrics["precision"]) if all_metrics["precision"] else 0.0,
+        "recall": np.mean(all_metrics["recall"]) if all_metrics["recall"] else 0.0,
+        "f1": np.mean(all_metrics["f1"]) if all_metrics["f1"] else 0.0,
     }
     
     eps = 1e-7
