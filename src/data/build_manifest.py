@@ -113,7 +113,12 @@ def build_manifest(input_dir: str, output_path: str) -> pd.DataFrame:
     df.to_csv(output_path, index=False)
     print(f"Manifest saved to {output_path}")
     print(f"Total images: {len(df)}")
-    print(f"Cities: {df['city'].unique().tolist()}")
+    
+    if len(df) > 0:
+        print(f"Cities: {df['city'].unique().tolist()}")
+    else:
+        print("Warning: No images found. Check your input directory structure.")
+        print("Expected structure: {input_dir}/{city}/images/*.tif")
     
     return df
 

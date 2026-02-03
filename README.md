@@ -5,6 +5,7 @@ End-to-end pipeline for building footprint detection using satellite imagery (Sp
 ## Project Overview
 
 This project implements a complete workflow for detecting building footprints from satellite images:
+
 - Data preprocessing (rasterization, tiling)
 - Model training (PyTorch, U-Net via segmentation_models_pytorch)
 - Evaluation and metrics
@@ -117,6 +118,7 @@ uvicorn src.serve.app_fastapi:app --host 0.0.0.0 --port 8000
 ## Configuration
 
 All configurations are stored in YAML files under `configs/`:
+
 - `train.yaml`: Training hyperparameters
 - `infer.yaml`: Inference settings
 - `experiments/`: Experiment-specific configs
@@ -130,10 +132,12 @@ All configurations are stored in YAML files under `configs/`:
 ## Data Format
 
 ### Input
+
 - Images: GeoTIFF or PNG (RGB or multispectral)
 - Annotations: GeoJSON polygons
 
 ### Output
+
 - Predicted masks: GeoTIFF (single-band binary)
 - Vectorized polygons: GeoJSON
 
@@ -143,10 +147,6 @@ All configurations are stored in YAML files under `configs/`:
 - Paris
 - Shanghai
 - Vegas
-
-## License
-
-MIT License
 
 ## Acknowledgments
 

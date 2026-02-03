@@ -72,4 +72,4 @@ logging:
   log_interval: 10
 
 seed: 42
-device: cuda
+device: cpu

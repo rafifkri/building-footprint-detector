@@ -148,6 +148,50 @@ def tile_image_and_mask(
     return tile_count
 
 
+def find_mask_for_image(image_path: str, masks_dir: str = None) -> str:
+    """
+    Find corresponding mask file for an image.
+    Supports multiple naming conventions and extensions.
+    
+    Args:
+        image_path: Path to the image file
+        masks_dir: Optional directory to search for masks
+        
+    Returns:
+        Path to mask file or None if not found
+    """
+    image_path = Path(image_path)
+    image_stem = image_path.stem
+    image_parent = image_path.parent
+    
+    possible_mask_dirs = []
+    if masks_dir:
+        possible_mask_dirs.append(Path(masks_dir))
+    
+    if image_parent.name == "images":
+        possible_mask_dirs.append(image_parent.parent / "mask")
+        possible_mask_dirs.append(image_parent.parent / "masks")
+    
+    possible_mask_dirs.append(image_parent)
+    
+    possible_extensions = [".png", ".tif", ".tiff", ".jpg", ".jpeg"]
+    
+    for mask_dir in possible_mask_dirs:
+        if not mask_dir.exists():
+            continue
+        
+        for ext in possible_extensions:
+            mask_path = mask_dir / f"{image_stem}{ext}"
+            if mask_path.exists():
+                return str(mask_path)
+            
+            mask_path = mask_dir / f"{image_stem}_mask{ext}"
+            if mask_path.exists():
+                return str(mask_path)
+    
+    return None
+
+
 def tile_from_splits(
     splits_dir: str,
     masks_dir: str,
@@ -161,14 +205,14 @@ def tile_from_splits(
     
     Args:
         splits_dir: Directory containing split CSVs
-        masks_dir: Directory containing rasterized masks
+        masks_dir: Directory containing rasterized masks (optional, will auto-detect)
         output_dir: Base output directory for tiles
         tile_size: Size of each tile
         overlap: Overlap between tiles
         min_building_ratio: Minimum building pixel ratio
     """
     splits_path = Path(splits_dir)
-    masks_path = Path(masks_dir)
+    masks_path = Path(masks_dir) if masks_dir else None
     output_path = Path(output_dir)
     
     for split in ["train", "val", "test"]:
@@ -189,13 +233,9 @@ def tile_from_splits(
             city = row.get("city", "unknown")
             image_name = Path(image_path).stem
             
-            mask_filename = f"{city}_{image_name}_mask.tif"
-            mask_path = masks_path / mask_filename
+            mask_path = find_mask_for_image(image_path, str(masks_path) if masks_path else None)
             
-            if not mask_path.exists():
-                mask_path = masks_path / f"{image_name}_mask.tif"
-            
-            if not mask_path.exists():
+            if mask_path is None:
                 print(f"Warning: Mask not found for {image_path}")
                 continue
             
@@ -204,7 +244,7 @@ def tile_from_splits(
             try:
                 tiles = tile_image_and_mask(
                     image_path,
-                    str(mask_path),
+                    mask_path,
                     str(split_image_dir),
                     str(split_mask_dir),
                     tile_size,
