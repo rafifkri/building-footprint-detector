@@ -155,8 +155,8 @@ def find_mask_for_image(image_path: str, masks_dir: str = None, city: str = None
     
     Args:
         image_path: Path to the image file
-        masks_dir: Optional directory to search for masks
-        city: Optional city name for mask filename prefix
+        masks_dir: Optional directory to search for masks (e.g., rasterized full_masks)
+        city: Optional city name for constructing mask filename
         
     Returns:
         Path to mask file or None if not found
@@ -169,6 +169,7 @@ def find_mask_for_image(image_path: str, masks_dir: str = None, city: str = None
     if masks_dir:
         possible_mask_dirs.append(Path(masks_dir))
     
+    # Check sibling mask folders
     if image_parent.name == "images":
         possible_mask_dirs.append(image_parent.parent / "mask")
         possible_mask_dirs.append(image_parent.parent / "masks")
@@ -177,24 +178,28 @@ def find_mask_for_image(image_path: str, masks_dir: str = None, city: str = None
     
     possible_extensions = [".png", ".tif", ".tiff", ".jpg", ".jpeg"]
     
+    # Build possible mask names
+    possible_names = [
+        image_stem,  # exact match
+        f"{image_stem}_mask",  # with _mask suffix
+    ]
+    
+    # If city is provided, also try city-prefixed names (for rasterized masks)
+    if city:
+        possible_names.extend([
+            f"{city}_{image_stem}_mask",
+            f"{city}_{image_stem}",
+        ])
+    
     for mask_dir in possible_mask_dirs:
         if not mask_dir.exists():
             continue
         
-        for ext in possible_extensions:
-            # Try with city prefix first
-            if city:
-                mask_path = mask_dir / f"{city}_{image_stem}_mask{ext}"
+        for mask_name in possible_names:
+            for ext in possible_extensions:
+                mask_path = mask_dir / f"{mask_name}{ext}"
                 if mask_path.exists():
                     return str(mask_path)
-            
-            mask_path = mask_dir / f"{image_stem}{ext}"
-            if mask_path.exists():
-                return str(mask_path)
-            
-            mask_path = mask_dir / f"{image_stem}_mask{ext}"
-            if mask_path.exists():
-                return str(mask_path)
     
     return None
 
@@ -240,6 +245,12 @@ def tile_from_splits(
             city = row.get("city", "unknown")
             image_name = Path(image_path).stem
             
+            # Check if image exists
+            if not Path(image_path).exists():
+                print(f"Warning: Image not found: {image_path}")
+                continue
+            
+            # Find mask with city context for better matching
             mask_path = find_mask_for_image(
                 image_path, 
                 str(masks_path) if masks_path else None,
@@ -266,6 +277,8 @@ def tile_from_splits(
                 total_tiles += tiles
             except Exception as e:
                 print(f"Error tiling {image_path}: {e}")
+                import traceback
+                traceback.print_exc()
         
         print(f"{split}: {total_tiles} tiles created")
 

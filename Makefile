@@ -44,9 +44,17 @@ rasterize:
 	$(PYTHON) -m src.data.rasterize_annotations --manifest data/manifest.csv --output data/processed/full_masks
 
 tile:
-	$(PYTHON) -m src.data.tile_images --manifest data/manifest.csv --masks data/processed/full_masks --output data/processed/tiles
+	$(PYTHON) -m src.data.tile_images --splits data/splits --masks data/processed/full_masks --output data/processed/tiles
 
-preprocess: manifest split rasterize tile
+# Clean incorrectly sized tiles
+cleanup-tiles:
+	$(PYTHON) -m src.data.cleanup_tiles --tiles-dir data/processed/tiles --expected-size 512 --execute
+
+# Validate the data pipeline
+validate:
+	$(PYTHON) -m src.data.validate_pipeline
+
+preprocess: manifest split rasterize tile cleanup-tiles validate
 
 train:
 	$(PYTHON) -m src.training.train --config $(CONFIG)

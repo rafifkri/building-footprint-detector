@@ -39,13 +39,22 @@ def find_annotation_file(image_path: Path, annotations_dir: Path) -> str:
     """Find matching annotation file for an image."""
     image_stem = image_path.stem
     
-    annotation_extensions = [".geojson", ".json", ".shp"]
+    # Support both vector annotations and raster masks
+    annotation_extensions = [".png", ".tif", ".tiff", ".geojson", ".json", ".shp"]
     
+    # First try exact match
     for ext in annotation_extensions:
         annotation_path = annotations_dir / f"{image_stem}{ext}"
         if annotation_path.exists():
             return str(annotation_path)
     
+    # Try with _mask suffix
+    for ext in annotation_extensions:
+        annotation_path = annotations_dir / f"{image_stem}_mask{ext}"
+        if annotation_path.exists():
+            return str(annotation_path)
+    
+    # Fallback: search for partial match
     for ext in annotation_extensions:
         for annotation_file in annotations_dir.glob(f"*{ext}"):
             if image_stem in annotation_file.stem:
@@ -76,7 +85,14 @@ def build_manifest(input_dir: str, output_path: str) -> pd.DataFrame:
             
         city_name = city_dir.name
         images_dir = city_dir / "images"
-        annotations_dir = city_dir / "annotations"
+        
+        # Support multiple annotation folder names
+        annotations_dir = None
+        for ann_folder in ["mask", "masks", "annotations", "labels"]:
+            potential_dir = city_dir / ann_folder
+            if potential_dir.exists():
+                annotations_dir = potential_dir
+                break
         
         if not images_dir.exists():
             print(f"Warning: No images directory found for {city_name}")
@@ -89,7 +105,7 @@ def build_manifest(input_dir: str, output_path: str) -> pd.DataFrame:
             image_path = str(image_file)
             
             annotation_path = ""
-            if annotations_dir.exists():
+            if annotations_dir is not None:
                 annotation_path = find_annotation_file(image_file, annotations_dir)
             
             metadata = get_image_metadata(image_path)

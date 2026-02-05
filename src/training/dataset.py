@@ -22,6 +22,7 @@ class BuildingDataset(Dataset):
         transform: Optional[Callable] = None,
         image_suffix: str = ".tif",
         mask_suffix: str = "_mask.tif",
+        expected_size: Optional[int] = 512,
     ):
         """
         Initialize dataset.
@@ -32,25 +33,44 @@ class BuildingDataset(Dataset):
             transform: Albumentations transform
             image_suffix: Image file suffix
             mask_suffix: Mask file suffix
+            expected_size: Expected tile size (filters out wrong-sized images)
         """
         self.images_dir = Path(images_dir)
         self.masks_dir = Path(masks_dir)
         self.transform = transform
         self.image_suffix = image_suffix
         self.mask_suffix = mask_suffix
+        self.expected_size = expected_size
         
+        # Only load tiled images (contain '_tile_' in filename)
         self.image_files = sorted([
             f for f in self.images_dir.glob(f"*{image_suffix}")
-            if not f.name.endswith(mask_suffix)
+            if not f.name.endswith(mask_suffix) and "_tile_" in f.name
         ])
         
+        # Fallback: if no tiles found, try loading all images but filter by tile pattern
         if len(self.image_files) == 0:
-            self.image_files = sorted([
-                f for f in self.images_dir.glob("*.tif")
-            ])
-            self.image_files.extend(sorted([
-                f for f in self.images_dir.glob("*.png")
-            ]))
+            all_files = sorted(list(self.images_dir.glob("*.tif")) + list(self.images_dir.glob("*.png")))
+            self.image_files = [f for f in all_files if "_tile_" in f.name]
+        
+        # Final fallback: load all images if still empty (for non-tiled datasets)
+        if len(self.image_files) == 0:
+            self.image_files = sorted(list(self.images_dir.glob("*.tif")) + list(self.images_dir.glob("*.png")))
+        
+        # Validate image sizes if expected_size is specified
+        if expected_size is not None and len(self.image_files) > 0:
+            valid_files = []
+            for f in self.image_files:
+                try:
+                    with rasterio.open(f) as src:
+                        if src.width == expected_size and src.height == expected_size:
+                            valid_files.append(f)
+                except Exception:
+                    continue
+            
+            if len(valid_files) < len(self.image_files):
+                print(f"Filtered {len(self.image_files) - len(valid_files)} images with wrong size")
+                self.image_files = valid_files
         
         print(f"Found {len(self.image_files)} images in {images_dir}")
     

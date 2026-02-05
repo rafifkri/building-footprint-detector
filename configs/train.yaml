@@ -4,7 +4,7 @@ data:
   tiles_dir: data/processed/tiles
   tile_size: 512
   overlap: 64
-  num_workers: 4
+  num_workers: 0  # Use 0 on Windows to avoid multiprocessing issues
 
 model:
   name: unet
@@ -31,12 +31,12 @@ scheduler:
 
 training:
   epochs: 100
-  batch_size: 16
-  val_batch_size: 16
+  batch_size: 8  # Reduced for stability
+  val_batch_size: 8
   early_stopping_patience: 15
   grad_clip: 1.0
-  accumulation_steps: 1
-  mixed_precision: true
+  accumulation_steps: 2  # Effective batch size = 16
+  mixed_precision: false  # Disable for CPU training
 
 augmentation:
   train:
@@ -72,4 +72,4 @@ logging:
   log_interval: 10
 
 seed: 42
-device: cpu
+device: cuda  # Use 'cuda' for GPU, 'cpu' for CPU-only

@@ -74,7 +74,7 @@ python -m src.data.split_manifest --manifest data/manifest.csv --output data/spl
 python -m src.data.rasterize_annotations --manifest data/manifest.csv --output data/processed/full_masks
 
 # Create tiles for training
-python -m src.data.tile_images --manifest data/manifest.csv --masks data/processed/full_masks --output data/processed/tiles
+python -m src.data.tile_images --splits data/splits --masks data/processed/full_masks --output data/processed/tiles
 ```
 
 ### 2. Train Model
