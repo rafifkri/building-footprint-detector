@@ -71,7 +71,7 @@ def get_transforms(config: dict, split: str) -> A.Compose:
         if "gaussian_noise" in aug_config:
             gn = aug_config["gaussian_noise"]
             transforms_list.append(
-                A.GaussianNoise(
+                A.GaussNoise(
                     var_limit=tuple(gn.get("var_limit", [10.0, 50.0])),
                     p=gn.get("p", 0.2),
                 )
